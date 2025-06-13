@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AbuseIPDB Integration Tool is a utility designed to help users seamlessly interact with the AbuseIPDB API. This tool integrates with the open WebUI to provide a user-friendly interface for checking and managing IP address information related to potential abusive behavior.
+The AbuseIPDB Integration Tool is a utility designed to help users interact with the AbuseIPDB API. This tool integrates with the open WebUI to provide a user-friendly interface for checking and managing IP address information related to potential abusive behavior.
 
 ## Features
 
