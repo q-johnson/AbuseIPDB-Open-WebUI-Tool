@@ -11,4 +11,5 @@ The AbuseIPDB Integration Tool is a utility designed to help users interact with
 - **Integration with Open WebUI**: Leverage the flexibility of open WebUI for a customized experience.
 
 ## Requirements
+- An installation of Open WebUI >= v0.6.0
 - An AbuseIPDB account with a valid API key.
