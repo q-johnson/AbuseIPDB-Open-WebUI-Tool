@@ -83,7 +83,7 @@ class Tools:
         """Report an IP address to the AbuseIPDB database.
         Args:
             ip_address (str): The IP address to report.
-            categories (str): A list of categories for the report. Use the ID(s) for each category when calling this function. In the case of using more than one value, ensure you are using comma separated values. See the below for the list of categories::
+            categories (str): A list of categories for the report. Use the ID(s) for each category when calling this function. In the case of using more than one ID, ensure you separate the IDs with a comma ','. See the below for the list of categories::
 | ID  | Title             | Description                                                                                                                                                           |
 |-----|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | 1   | DNS Compromise    | Altering DNS records resulting in improper redirection.                                                                                                               |
