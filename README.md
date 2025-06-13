@@ -8,7 +8,6 @@ The AbuseIPDB Integration Tool is a utility designed to help users seamlessly in
 
 - **Check IP Address**: Quickly check the reputation of an IP address.
 - **Report Abuse**: Easily report abusive IP addresses directly from the interface.
-- **Search and Filter**: Search and filter records based on specific criteria.
 - **Integration with Open WebUI**: Leverage the flexibility of open WebUI for a customized experience.
 
 ## Requirements
