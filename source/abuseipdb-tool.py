@@ -2,7 +2,8 @@
 title: AbuseIPDB Tool
 description: A tool to interact with the AbuseIPDB API for reporting and checking IP addresses.
 current-functions:
-
+    - check_ip: Check an IP address against the AbuseIPDB database.
+    - report_ip: Report an IP address to the AbuseIPDB database.
 author: q-johnson
 version: 0.0.1
 license: MIT License
@@ -21,7 +22,7 @@ def abuseipdb_api(api_method: str, endpoint: str, api_key: str, params: dict = N
     if response.status_code == 200:
         return response.json()
     else:
-        raise Exception(f"API_KEY = {api_key} | API Error: [{response.status_code}] {response.text}")
+        raise Exception(f"API Error: [{response.status_code}] {response.text}")
 
 class Tools:
 
@@ -66,6 +67,7 @@ class Tools:
         }
 
         return f"""
+You are a helpful assistant to a cybersecurity engineer who is using the AbuseIPDB API to report and check IP addresses for abuse. At the instruction of the user, you have just successfully retrieved information about an IP address with the following details:
 ### IP Address Check Result
 **IP Address:** {processed_data['ip_address']} *This is the IP address you checked.*
 **Abuse Confidence Score:** {processed_data['abuse_confidence_score']} *Abuse  confidence score is a value between 0 and 100, where higher values indicate a higher likelihood of abuse.*
@@ -77,13 +79,14 @@ class Tools:
 **IP Version:** {processed_data['ip_version']} *The version of the IP address (IPv4 or IPv6).*
 **Total Reports:** {processed_data['total_reports']} *Total number of reports made against this IP address.*
 **Last Reported At:** {processed_data['last_reported_at']} *The date and time when this IP address was last reported.*
+View the full check on AbuseIPDB: [AbuseIPDB Report](https://www.abuseipdb.com/check/{ip_address}) *Always include a link to the AbuseIPDB report for the IP address.*
 """
     
     async def report_ip(self, ip_address: str, categories: str, comment: str, __event_call__=None, __event_emitter__=None):
         """Report an IP address to the AbuseIPDB database.
         Args:
             ip_address (str): The IP address to report.
-            categories (str): A list of categories for the report. Use the ID(s) for each category when calling this function. In the case of using more than one ID, ensure you separate the IDs with a comma ','. See the below for the list of categories::
+            categories (list): A list of categories for the report. Use the ID(s) for each category when calling this function. In the case of using more than one ID, ensure you separate the IDs with a comma ','. See the below for the list of categories::
 | ID  | Title             | Description                                                                                                                                                           |
 |-----|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | 1   | DNS Compromise    | Altering DNS records resulting in improper redirection.                                                                                                               |
@@ -133,21 +136,33 @@ class Tools:
                 }
             })
 
+            # Sanitize categories input
+            if isinstance(categories, str):
+                categories_list = [str(int(cat.strip())) for cat in categories.split(',')]
+                categories_clean = ",".join(categories_list)
+            elif isinstance(categories, list):
+                categories_list = [str(int(cat)) for cat in categories]
+                categories_clean = ",".join(categories_list)
+            else:
+                raise ValueError("categories must be a string or list of integers.")
+
             report_data = abuseipdb_api(
                 api_method="POST",
                 endpoint="report",
                 api_key=self.valves.api_key,
                 params={
                     "ip": ip_address,
-                    "categories": ",".join(categories),
+                    "categories": categories_clean,
                     "comment": comment
                 }
             )
 
             return f"""
-        ### IP Address Report Result
-        **IP Address:** {report_data.get("data", {}).get("ipAddress")} *This is the IP address you reported.*
-        **Abuse Confidence Score:** {report_data.get("data", {}).get("abuseConfidenceScore")} *Abuse confidence score is a value between 0 and 100, where higher values indicate a higher likelihood of abuse.*
+You are a helpful assistant to a cybersecurity engineer who is using the AbuseIPDB API to report and check IP addresses for abuse. At the instruction of the user, you will be successfully reporting an IP address to the AbuseIPDB with the following details:
+**IP Address:** {report_data.get("data", {}).get("ipAddress")}
+The user is reporting the IP address **{ip_address}** with the following categories: {categories_clean} and comment: {comment}.
+**The Current Abuse Confidence Score for the IP Address:** {report_data.get("data", {}).get("abuseConfidenceScore")} *Abuse confidence score is a value between 0 and 100, where higher values indicate a higher likelihood of abuse.*
+View the report on AbuseIPDB: [AbuseIPDB Report](https://www.abuseipdb.com/check/{ip_address}) *Always include a link to the report on AbuseIPDB.*
         """
         else:
             await __event_emitter__({
@@ -160,4 +175,38 @@ class Tools:
             return f"""
 ### IP Address Report Cancelled By User
 **IP Address:** {ip_address} *The report for this IP address has been cancelled.*
+"""
+
+    def get_information_about_categories(self):
+        """Get information about the categories used for reporting IP addresses."""
+        return """
+        # AbuseIPDB Categories
+The following is a list of categories used for reporting IP addresses to AbuseIPDB. Each category has an ID and a description. When reporting an IP address, you can use the ID(s) for each category.
+List the ID, Title, and Description of each category in a table format. Ensure that the table is formatted correctly and includes all categories.
+| ID  | Title             | Description                                                                                                                                                           |
+|-----|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1   | DNS Compromise    | Altering DNS records resulting in improper redirection.                                                                                                               |
+| 2   | DNS Poisoning     | Falsifying domain server cache (cache poisoning).                                                                                                                     |
+| 3   | Fraud Orders      | Fraudulent orders.                                                                                                                                                     |
+| 4   | DDoS Attack       | Participating in distributed denial-of-service (usually part of botnet).                                                                                              |
+| 5   | FTP Brute-Force   |                                                                                                                                                                       |
+| 6   | Ping of Death     | Oversized IP packet.                                                                                                                                                   |
+| 7   | Phishing          | Phishing websites and/or email.                                                                                                                                       |
+| 8   | Fraud VoIP        |                                                                                                                                                                       |
+| 9   | Open Proxy        | Open proxy, open relay, or Tor exit node.                                                                                                                             |
+| 10  | Web Spam          | Comment/forum spam, HTTP referer spam, or other CMS spam.                                                                                                             |
+| 11  | Email Spam        | Spam email content, infected attachments, and phishing emails. Note: Limit comments to only relevant information (instead of log dumps) and remove PII if anonymous. |
+| 12  | Blog Spam         | CMS blog comment spam.                                                                                                                                                |
+| 13  | VPN IP            | Conjunctive category.                                                                                                                                                  |
+| 14  | Port Scan         | Scanning for open ports and vulnerable services.                                                                                                                      |
+| 15  | Hacking           |                                                                                                                                                                       |
+| 16  | SQL Injection     | Attempts at SQL injection.                                                                                                                                             |
+| 17  | Spoofing          | Email sender spoofing.                                                                                                                                                |
+| 18  | Brute-Force       | Credential brute-force attacks on webpage logins and services like SSH, FTP, SIP, SMTP, RDP, etc. Separate from DDoS attacks.                                        |
+| 19  | Bad Web Bot       | Webpage scraping and crawlers ignoring robots.txt. Excessive requests and user agent spoofing can also be reported here.                                             |
+| 20  | Exploited Host    | Host likely infected with malware and used for attacks or to host malicious content. Often used with other attack categories.                                         |
+| 21  | Web App Attack    | Attempts to exploit web apps like WordPress/Drupal, e-commerce platforms, phpMyAdmin, forums, and plugins.                                                            |
+| 22  | SSH               | Secure Shell (SSH) abuse. Use with more specific categories.                                                                                                          |
+| 23  | IoT Targeted      | Abuse targeting "Internet of Things" devices. Include device type in comments.                                                                                        |
+
 """
